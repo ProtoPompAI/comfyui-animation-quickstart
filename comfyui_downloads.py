@@ -334,7 +334,7 @@ if __name__ == '__main__':
     if not Path(bp / 'comfy-ui').exists():
         git_clone("comfyanonymous/ComfyUI.git" , f"{bp}/comfy-ui")
 
-    for dir in ['inputs-comfy-ui', 'outputs-comfy-ui', 'workflows', 'models/insightface']:
+    for dir in ['inputs-comfy-ui', 'outputs-comfy-ui', 'workflows', 'comfy-ui/models/insightface']:
         (bp / dir).mkdir(exist_ok=True)
     
     # Setting up a Linux distribution
