@@ -124,6 +124,7 @@ extensions = [
     "theUpsider/ComfyUI-Logic",
     "Ttl/ComfyUi_NNLatentUpscale",
     "JPS-GER/ComfyUI_JPS-Nodes",
+    "BlenderNeko/Advanced CLIP Text Encode",
 ]
 
 repositories_without_lazy_install = [
@@ -329,6 +330,7 @@ def format_model_downloads(hf_models, civit_models, misc_link_models):
 
 if __name__ == '__main__':
 
+    set_path = lambda x: x
     os.chmod(Path(bp) / 'installer_files', 0o777) # Gives permissions for anyone to delete the installer file folder
 
     if not Path(bp / 'comfy-ui').exists():
@@ -344,7 +346,7 @@ if __name__ == '__main__':
             "apt-get update",
             "apt-get install libglfw3-dev libgles2-mesa-dev freeglut3-dev " +
             "build-essential ffmpeg libssl-dev libffi-dev python3-dev " +
-            "libsndfile1 p7zip nano",
+            "libsndfile1 p7zip nano -y",
             "apt-get upgrade -y"
         ]
         try:
@@ -374,19 +376,24 @@ if __name__ == '__main__':
             text_file.write(
                 "MESA_GL_VERSION_OVERRIDE=4.1\n" # Fixes an issue on WSL2 for AnimateDiff
                 f"cd {(bp / 'comfy-ui').absolute().as_posix()}\n"
-                f"{venv_path.absolute().as_posix()} main.py --port 3000 "
-                f"--highvram --listen --input-directory inputs-comfy-ui "
-                "--output-directory outputs-comfy-ui"
+                f"{(venv_path / 'bin/python').absolute().as_posix()} main.py --port 3000 "
+                f"--highvram --listen "
+                "--input-directory inputs-comfy-ui "
+                "--output-directory outputs-comfy-ui "
             )
-        st = os.stat(sh_file_p)
-        os.chmod(sh_file_p, st.st_mode | stat.S_IEXEC)
+        try:
+            os.chmod(sh_file_p, 0o777)
+        except:
+            pass
 
     sh_file_c = bp / 'share_port_linux.sh'
     if not sh_file_c.exists():
         with open(sh_file_c, 'w') as text_file:
             text_file.write(f'cloudflared tunnel --url http://127.0.0.1:3000')
-        st = os.stat(sh_file_c)
-        os.chmod(sh_file_p, st.st_mode | stat.S_IEXEC)
+        try:
+            os.chmod(sh_file_c, 0o777)
+        except:
+            pass
     
     bat_file_p = bp / 'run_comfy_ui_windows.bat'
     if not bat_file_p.exists():
@@ -399,8 +406,11 @@ if __name__ == '__main__':
                 f"--output-directory {(bp / 'outputs-comfy-ui').absolute().as_posix()} "
                 "--windows-standalone-build"
             )
-            st = os.stat(bat_file_p)
-            os.chmod(bat_file_p, st.st_mode | stat.S_IEXEC)
+            try:
+                os.chmod(bat_file_p, 0o777)
+            except:
+                pass
+            
 
     print(sys.executable) 
 
