@@ -6,4 +6,4 @@ run_comfy_ui_windows.bat
 share_port_linux.sh
 *.log
 .empty
-.vscode/launch.json
+.vscode
