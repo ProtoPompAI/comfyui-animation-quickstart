@@ -124,7 +124,7 @@ extensions = [
     "theUpsider/ComfyUI-Logic",
     "Ttl/ComfyUi_NNLatentUpscale",
     "JPS-GER/ComfyUI_JPS-Nodes",
-    "BlenderNeko/Advanced CLIP Text Encode",
+    "BlenderNeko/ComfyUI_ADV_CLIP_emb",
 ]
 
 repositories_without_lazy_install = [
@@ -146,7 +146,7 @@ def pip_install(*args):
 def git_clone(repository, dest_directory, skip_if_exists=True):
     # print(repository, not (skip_if_exists and Path(dest_directory).exists()))
     if not (skip_if_exists and Path(dest_directory).exists()):
-        cc(f"git clone https://github.com/{repository} {Path(dest_directory).absolute().as_posix()}")
+        cc(f"git clone 'https://github.com/{repository}' '{Path(dest_directory).absolute().as_posix()}'")
 
 def download_files(url_dict, processes=10):
     """
@@ -316,28 +316,28 @@ def format_model_downloads(hf_models, civit_models, misc_link_models):
     for key, items in hf_models.items():
         for inner_item in items:
             for idx in range(1, len(inner_item)):
-                op = bp/f'comfy-ui/models/{key}' if type(key) == str else key
+                op = set_path(f'comfy-ui/models/{key}') if type(key) == str else key
                 url_dict.update({f'https://huggingface.co/{inner_item[0]}/resolve/main/{inner_item[idx]}': op})
     for key, items in civit_models.items():
         for item in items:
-            op = bp/f'comfy-ui/models/{key}' if type(key) == str else key
+            op = set_path(f'comfy-ui/models/{key}') if type(key) == str else key
             url_dict.update({f'https://civitai.com/api/download/models/{item}': op})
     for key, items in misc_link_models.items():
         for item in items:
-            op = bp/f'comfy-ui/models/{key}' if type(key) == str else key
+            op = set_path(f'comfy-ui/models/{key}') if type(key) == str else key
             url_dict.update({item: op})
     return url_dict
 
 if __name__ == '__main__':
 
-    set_path = lambda x: x
-    os.chmod(Path(bp) / 'installer_files', 0o777) # Gives permissions for anyone to delete the installer file folder
+    set_path = lambda x: (bp / x).absolute()
+    os.chmod(set_path('installer_files'), 0o777) # Gives permissions for anyone to delete the installer file folder
 
     if not Path(bp / 'comfy-ui').exists():
-        git_clone("comfyanonymous/ComfyUI.git" , f"{bp}/comfy-ui")
+        git_clone("comfyanonymous/ComfyUI.git" , set_path("comfy-ui"))
 
     for dir in ['inputs-comfy-ui', 'outputs-comfy-ui', 'workflows', 'comfy-ui/models/insightface']:
-        (bp / dir).mkdir(exist_ok=True)
+        Path(set_path(dir)).mkdir(exist_ok=True)
     
     # Setting up a Linux distribution
 
@@ -369,18 +369,32 @@ if __name__ == '__main__':
             cc('rm cloudflared-linux-amd64.deb')
 
     # Writing files to open and share ComfyUI for Linux and Windows
+    py_args = [
+        f"{(venv_path / 'bin/python').absolute().as_posix()}",
+        "main.py",
+        "--input-directory" , str(set_path("inputs-comfy-ui")),
+        "--output-directory", str(set_path("outputs-comfy-ui")),
+    ]
+
+    # --auto-launch
 
     sh_file_p = bp / 'run_comfy_ui_linux.sh'
     if not sh_file_p.exists():
         with open(sh_file_p, 'w') as text_file:
-            text_file.write(
-                "MESA_GL_VERSION_OVERRIDE=4.1\n" # Fixes an issue on WSL2 for AnimateDiff
-                f"cd {(bp / 'comfy-ui').absolute().as_posix()}\n"
-                f"{(venv_path / 'bin/python').absolute().as_posix()} main.py --port 3000 "
-                f"--highvram --listen "
-                "--input-directory inputs-comfy-ui "
-                "--output-directory outputs-comfy-ui "
-            )
+            
+            py_args_linux = [
+                # MESA_GL_VERSION_OVERRIDE Fixes an issue on WSL2 for AnimateDiff
+                'MESA_GL_VERSION_OVERRIDE=4.1', 
+                *py_args,
+                "--port 3000",
+                # "--highvram",
+                "--listen",
+            ]
+
+            text_file.write('\n'.join([
+                f'cd {set_path("comfy-ui")}', 
+                f"{' '.join(py_args)}",
+            ]))
         try:
             os.chmod(sh_file_p, 0o777)
         except:
@@ -398,14 +412,14 @@ if __name__ == '__main__':
     bat_file_p = bp / 'run_comfy_ui_windows.bat'
     if not bat_file_p.exists():
         with open(bat_file_p, 'w') as text_file:
-            text_file.write(
-                f"cd %0\.."
-                f"{sys.executable} " 
-                f"{(bp / 'comfy-ui/main.py').absolute().as_posix()} " # "%0\..\comfy-ui\main.py "
-                f"--input-directory  {(bp / 'inputs-comfy-ui' ).absolute().as_posix()} "
-                f"--output-directory {(bp / 'outputs-comfy-ui').absolute().as_posix()} "
-                "--windows-standalone-build"
-            )
+            py_args_windows = [
+                *py_args,
+                "--auto-launch" 
+            ]
+            text_file.write('\n'.join([
+                f"cd %0\..",
+                f"{py_args_windows}",
+            ]))
             try:
                 os.chmod(bat_file_p, 0o777)
             except:
@@ -417,7 +431,7 @@ if __name__ == '__main__':
     pip_install('--upgrade', 'pip')
     pip_install("torch", "torchvision", "torchaudio",
                 "--extra-index-url=https://download.pytorch.org/whl/cu118")
-    pip_install("-r", f"{bp.absolute().as_posix()}/comfy-ui/requirements.txt")
+    pip_install("-r", set_path("comfy-ui/requirements.txt"))
     pip_install("boltons")
     pip_install("asyncio", "aiohttp", "aiofile",  "tqdm", "requests", "pandas")
     import asyncio, aiofile, aiohttp, tqdm, tqdm.asyncio, requests, pandas as pd
@@ -427,7 +441,7 @@ if __name__ == '__main__':
     
     url_dict = format_model_downloads(hf_models, civit_models, misc_link_models)
 
-    mtb_path = Path(bp.absolute().as_posix() + '/comfy-ui/custom_nodes/comfy_mtb/')
+    mtb_path = Path(set_path('comfy-ui/custom_nodes/comfy_mtb/'))
     mtb_path_exists_before = mtb_path.exists()
 
     for repositories in extensions:
@@ -436,7 +450,7 @@ if __name__ == '__main__':
         else:
             repositories = [f"{repositories[0]}/{r}" for r in repositories[1:]]
         for repository in repositories:
-            repository_loc = Path(f"{bp}/comfy-ui/custom_nodes/{repository.split('/')[-1]}")
+            repository_loc = set_path(f"comfy-ui/custom_nodes/{repository.split('/')[-1]}")
             if not repository_loc.exists():
                 git_clone(repository, repository_loc)
             if repository.split('/')[-1] in repositories_without_lazy_install:
@@ -449,17 +463,17 @@ if __name__ == '__main__':
     if 'melMass/comfy_mtb' in extensions and mtb_path_exists_before == False and mtb_path.exists():
         try:
             cc(f'{sys.executable} '
-               f'{str((bp/"comfy-ui/custom_nodes/comfy_mtb/scripts/download_models.py").absolute().as_posix())} -y')
+               f'{str(set_path("comfy-ui/custom_nodes/comfy_mtb/scripts/download_models.py"))} -y')
         except:
-            comfy_mtb_path = str(Path(f"{bp}/comfy-ui/custom_nodes/{repository.split('/')[-1]}").absolute().as_posix())
+            comfy_mtb_path = str(set_path(f"/comfy-ui/custom_nodes/{repository.split('/')[-1]}"))
             os.chmod(comfy_mtb_path, 0o777)
             rmtree(comfy_mtb_path)
             print('Failed to install extension `melMass/comfy_mtb`, please use the ComfyUI Manager Menu inside '
                   'the ComfyUI program to install this extension.')
             
-    sys.path.insert(1, str(Path(bp / 'comfy-ui').absolute().as_posix()))
+    sys.path.insert(1, str(set_path( 'comfy-ui')))
     import folder_paths
-    sys.path.remove(str(Path(bp / 'comfy-ui').absolute().as_posix()))
+    sys.path.remove(str(set_path( 'comfy-ui')))
 
     # Downloading ComfyUI Models
 
