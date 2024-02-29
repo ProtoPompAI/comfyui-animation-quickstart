@@ -393,7 +393,7 @@ if __name__ == '__main__':
 
             text_file.write('\n'.join([
                 f'cd {set_path("comfy-ui")}', 
-                f"{' '.join(py_args)}",
+                f"{' '.join(py_args_linux)}",
             ]))
         try:
             os.chmod(sh_file_p, 0o777)
