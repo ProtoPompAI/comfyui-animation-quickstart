@@ -146,7 +146,7 @@ def pip_install(*args):
 def git_clone(repository, dest_directory, skip_if_exists=True):
     # print(repository, not (skip_if_exists and Path(dest_directory).exists()))
     if not (skip_if_exists and Path(dest_directory).exists()):
-        cc(f"git clone 'https://github.com/{repository}' '{Path(dest_directory).absolute().as_posix()}'")
+        cc(f"git clone https://github.com/{repository} {Path(dest_directory).absolute().as_posix()}")
 
 def download_files(url_dict, processes=10):
     """
