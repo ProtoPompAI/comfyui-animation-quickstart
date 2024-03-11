@@ -7,3 +7,5 @@ share_port_linux.sh
 *.log
 .empty
 .vscode
+comyui_downloads_v2.py
+change_proposals.md

@@ -124,7 +124,7 @@ extensions = [
     "theUpsider/ComfyUI-Logic",
     "Ttl/ComfyUi_NNLatentUpscale",
     "JPS-GER/ComfyUI_JPS-Nodes",
-    "BlenderNeko/ComfyUI_ADV_CLIP_emb",
+    "ltdrdata/ComfyUI_ADV_CLIP_emb",
 ]
 
 repositories_without_lazy_install = [
