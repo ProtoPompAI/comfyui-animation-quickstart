@@ -418,7 +418,7 @@ if __name__ == '__main__':
             ]
             text_file.write('\n'.join([
                 f"cd %0\..",
-                f"{py_args_windows}",
+                f"{' '.join(py_args_windows)}",
             ]))
             try:
                 os.chmod(bat_file_p, 0o777)
@@ -433,7 +433,7 @@ if __name__ == '__main__':
                 "--extra-index-url=https://download.pytorch.org/whl/cu118")
     pip_install("-r", set_path("comfy-ui/requirements.txt"))
     pip_install("boltons")
-    pip_install("asyncio", "aiohttp", "aiofile",  "tqdm", "requests", "pandas")
+    pip_install("asyncio", "aiohttp", "aiofile",  "tqdm", "requests", "pandas", "civitdl")
     import asyncio, aiofile, aiohttp, tqdm, tqdm.asyncio, requests, pandas as pd
     if 'melMass/comfy_mtb' in extensions:
         pip_install("tensorflow", "facexlib", "insightface", "basicsr")
